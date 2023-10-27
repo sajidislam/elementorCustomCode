@@ -22,10 +22,10 @@ add_action('elementor_pro/forms/validation', function($record, $ajax_handler) {
     if (!validateEmail($fields['email'])) {
         $table_name = 'failedEmails';
         $additional_data = [
-            'IP Address' => captureIPAddress(),
+            'IP_Address' => captureIPAddress(),
             'Date' => current_time('mysql'),
             'Referrer' => captureReferrer(),
-            'User Agent' => captureBrowserDetails(),
+            'User_Agent' => captureBrowserDetails(),
         ];
         $utm_data = getAllUTMParameters();
 
