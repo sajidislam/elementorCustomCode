@@ -1,20 +1,24 @@
 <?php
 
-function readUTMParameters() {
-    $utm_parameters = ['gclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
-    $values = [];
-    foreach ($utm_parameters as $param) {
-        $values[$param] = isset($_GET[$param]) ? sanitize_text_field($_GET[$param]) : '';
+function readUTMParameter($param) {
+    // Check if the UTM parameter is present in the URL
+    if (isset($_GET[$param])) {
+        $value = sanitize_text_field($_GET[$param]);
+
+        // Set the cookie if the value is found in the URL
+        setUTMParameters($param, $value, 90);
+    } else {
+        // If not present in URL, check for the cookie
+        $value = isset($_COOKIE[$param]) ? sanitize_text_field($_COOKIE[$param]) : '';
     }
-    return $values;
+    return $value;
 }
 
-function setUTMParameters($duration) {
-    $utm_values = readUTMParameters();
-    foreach ($utm_values as $key => $value) {
-        setcookie($key, $value, time() + (86400 * $duration), "/");  // 86400 = 1 day
-    }
+function setUTMParameters($param, $value, $duration) {
+    // Setting the cookie for 90 days (duration is in seconds)
+    setcookie($param, $value, time() + (86400 * $duration), "/"); // 86400 seconds in a day
 }
+
 
 function validateEmail($email) {
     $domain = array_pop(explode('@', $email));
