@@ -67,6 +67,10 @@ function notifyAdmin($message) {
 /**
  * Insert an event record to the specified database table.
  *
+ * Before attempting the insert operation, check if the table exists.
+ * If the table doesn't exist, create it using the WordPress dbDelta function, which is a WordPress function that can examine the current table structure, compare it to the desired table structure, and either create the table or alter the table to match, as necessary.
+ * Proceed with the insert operation.
+ *
  * @param string $table_name The name of the table.
  * @param array $fields Associative array of field names and their respective values.
  * @return bool True if insert is successful, false otherwise.
@@ -74,25 +78,41 @@ function notifyAdmin($message) {
 function insertEventToDB($table_name, $fields) {
     global $wpdb;
 
-    $result = $wpdb->insert($table_name, $fields);
+    // Check if the table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name;
 
-    if (!$result) {
-        // If the insertion failed, log the error and notify the admin.
-        $error_message = $wpdb->last_error;
-        error_log("Database insertion error in table {$table_name}: " . $error_message);
+    // If the table doesn't exist, create it
+    if (!$table_exists) {
+        $charset_collate = $wpdb->get_charset_collate();
 
-        // Notify the admin about the insertion error.
-        $notification_message = "A database insertion error occurred on your WordPress site:<br><br>"
-            . "Table: {$table_name}<br>"
-            . "Error: {$error_message}<br>"
-            . "Data: " . json_encode($fields);
-        notifyAdmin($notification_message);
+        $sql = "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            Name text NOT NULL,
+            Email text NOT NULL,
+            IP_Address text,
+            Date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+            Referrer text,
+            User_Agent text,
+            gclid text,
+            utm_source text,
+            utm_medium text,
+            utm_campaign text,
+            utm_content text,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
 
-        return false;
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
     }
 
-    return true;
-}
+    // Insert or update data in the table
+    $success = $wpdb->replace($table_name, $fields);
 
+    // Check and handle database errors
+    if (!$success) {
+        $error = $wpdb->last_error;
+        notifyAdmin("Failed to insert event into $table_name. Error: $error");
+    }
+}
 
 ?>
