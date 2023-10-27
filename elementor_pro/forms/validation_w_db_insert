@@ -1,0 +1,54 @@
+add_action('elementor_pro/forms/validation', function ($record, $ajax_handler) {
+    // Get the submitted data
+    $raw_fields = $record->get('fields');
+    $fields = [];
+    foreach ($raw_fields as $id => $field) {
+        $fields[$id] = $field['value'];
+    }
+
+    // Validate email format and domain
+    $email_value = $fields['email'];  // Assuming the email field's ID is 'email'
+    if (!filter_var($email_value, FILTER_VALIDATE_EMAIL)) {
+        $ajax_handler->add_error('email', 'Invalid email format.');
+        logFailedValidation($fields);
+        return;
+    }
+
+    list($local, $domain) = explode('@', $email_value);
+    if (!checkdnsrr($domain, 'MX')) {
+        $ajax_handler->add_error('email', 'Email domain seems invalid.');
+        logFailedValidation($fields);
+        return;
+    }
+
+}, 10, 2);
+
+function logFailedValidation($fields) {
+    global $wpdb;
+
+    $user_agent = sanitize_text_field($_SERVER['HTTP_USER_AGENT']);
+    $ip_address = sanitize_text_field($_SERVER['REMOTE_ADDR']);
+    $referrer = isset($_SERVER['HTTP_REFERER']) ? sanitize_text_field($_SERVER['HTTP_REFERER']) : '';
+    $current_time = current_time('mysql');
+    $utm_parameters = ['gclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
+    $utm_values = [];
+
+    foreach ($utm_parameters as $utm) {
+        $utm_values[$utm] = isset($_COOKIE[$utm]) ? sanitize_text_field($_COOKIE[$utm]) : '';
+    }
+
+    // Insert the failed validation into the 'failedEmails' table
+    $wpdb->insert('failedEmails', [
+        'Name' => $fields['name'],   // Assuming the name field's ID is 'name'
+        'Email' => $fields['email'],  
+        'IP Address' => $ip_address,
+        'Date' => $current_time,
+        'Referrer' => $referrer,
+        'User Agent' => $user_agent,
+        'gclid' => $utm_values['gclid'],
+        'utm_source' => $utm_values['utm_source'],
+        'utm_medium' => $utm_values['utm_medium'],
+        'utm_campaign' => $utm_values['utm_campaign'],
+        'utm_content' => $utm_values['utm_content']
+    ]);
+}
