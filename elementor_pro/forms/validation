@@ -1,26 +1,32 @@
 add_action('elementor_pro/forms/validation', function ($record, $ajax_handler) {
-    // Retrieve the email field from the form
-    $fields = $record->get_field(['id' => 'email']); // Assuming the email field ID is 'email'
-
-    // Return if the email field isn't found
+    // Ensure the email field ID matches the ID in your Elementor form
+    $fields = $record->get_field(['id' => 'email']);
     if (empty($fields)) {
         return;
     }
 
     $field = current($fields);
+    $email_value = $field['value'];
 
-    // Validate email format
-    if (!filter_var($field['value'], FILTER_VALIDATE_EMAIL)) {
+    // Check for valid email format
+    if (!filter_var($email_value, FILTER_VALIDATE_EMAIL)) {
         $ajax_handler->add_error($field['id'], 'Invalid email format.');
         return;
     }
 
-    // Split email to get domain
-    $email_parts = explode('@', $field['value']);
+    // Safely parse the email domain
+    $email_parts = explode('@', $email_value);
+    if (count($email_parts) !== 2) {
+        $ajax_handler->add_error($field['id'], 'Invalid email format.');
+        return;
+    }
     $domain = end($email_parts);
 
-    // Validate email domain
-    if (!checkdnsrr($domain, 'MX')) {
-        $ajax_handler->add_error($field['id'], 'Invalid email domain. Please use a valid email address.');
+    // Check for valid email domain (Optional based on server capabilities)
+    if (function_exists('checkdnsrr')) {
+        if (!checkdnsrr($domain, 'MX')) {
+            $ajax_handler->add_error($field['id'], 'Email domain seems invalid. Please use a valid email.');
+        }
     }
+
 }, 10, 2);
