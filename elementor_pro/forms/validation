@@ -1,32 +1,35 @@
-add_action('elementor_pro/forms/validation', function ($record, $ajax_handler) {
-    // Ensure the email field ID matches the ID in your Elementor form
+// Cleaner code. Moved a lot of the common functions to elementor-form-custom-functions.php 
+// make sure that the elementor-form-custom-functions.php exists in the same directory 
+// as the functions.php of the (child)theme.
+
+add_action('elementor_pro/forms/validation', function($record, $ajax_handler) {
+    require_once get_template_directory() . '/elementor-form-custom-functions.php';
+
     $fields = $record->get_field(['id' => 'email']);
     if (empty($fields)) {
+        $ajax_handler->add_error('email', 'Email cannot be blank');
         return;
     }
 
     $field = current($fields);
-    $email_value = $field['value'];
 
-    // Check for valid email format
-    if (!filter_var($email_value, FILTER_VALIDATE_EMAIL)) {
-        $ajax_handler->add_error($field['id'], 'Invalid email format.');
-        return;
+    if (!validateEmail($field['value'])) {
+        $ajax_handler->add_error($field['id'], 'Invalid Email Address or Domain');
+
+        $failed_data = [
+            'Name' => $record->get_field(['id' => 'name'])[0]['value'],
+            'Email' => $field['value'],
+            'IP Address' => captureIPAddress(),
+            'Date' => current_time('mysql'),
+            'Referrer' => captureReferrer(),
+            'User Agent' => captureBrowserDetails(),
+            'gclid' => readUTMParameters('gclid'),
+            'utm_source' => readUTMParameters('utm_source'),
+            'utm_medium' => readUTMParameters('utm_medium'),
+            'utm_campaign' => readUTMParameters('utm_campaign'),
+            'utm_content' => readUTMParameters('utm_content')
+        ];
+
+        insertEventToDB('failedEmails', $failed_data);
     }
-
-    // Safely parse the email domain
-    $email_parts = explode('@', $email_value);
-    if (count($email_parts) !== 2) {
-        $ajax_handler->add_error($field['id'], 'Invalid email format.');
-        return;
-    }
-    $domain = end($email_parts);
-
-    // Check for valid email domain (Optional based on server capabilities)
-    if (function_exists('checkdnsrr')) {
-        if (!checkdnsrr($domain, 'MX')) {
-            $ajax_handler->add_error($field['id'], 'Email domain seems invalid. Please use a valid email.');
-        }
-    }
-
 }, 10, 2);
