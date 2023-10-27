@@ -21,7 +21,8 @@ function setUTMParameters($param, $value, $duration) {
 
 
 function validateEmail($email) {
-    $domain = array_pop(explode('@', $email));
+    $parts = explode('@', $email);
+    $domain = array_pop($parts);
     return filter_var($email, FILTER_VALIDATE_EMAIL) && checkdnsrr($domain, 'MX');
 }
 
