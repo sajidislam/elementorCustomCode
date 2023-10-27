@@ -30,12 +30,12 @@ function setUTMParameters($param, $value, $duration) {
     setcookie($param, $value, time() + (86400 * $duration), "/"); // 86400 seconds in a day
 }
 
-
 function validateEmail($email) {
     $parts = explode('@', $email);
     $domain = array_pop($parts);
     return filter_var($email, FILTER_VALIDATE_EMAIL) && checkdnsrr($domain, 'MX');
 }
+
 
 function captureReferrer() {
     return isset($_SERVER['HTTP_REFERER']) ? sanitize_text_field($_SERVER['HTTP_REFERER']) : '';
@@ -124,7 +124,9 @@ function insertEventToDB($table_name, $fields) {
     if (!$success) {
         $error = $wpdb->last_error;
         notifyAdmin("Failed to insert event into $table_name. Error: $error");
+		return false;
     }
+	return true;
 }
 
 ?>
