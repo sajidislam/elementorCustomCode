@@ -3,7 +3,7 @@
 // as the functions.php of the (child)theme.
 
 add_action('elementor_pro/forms/validation', function($record, $ajax_handler) {
-    require_once get_template_directory() . '/elementor-form-custom-functions.php';
+    require_once get_stylesheet_directory() . '/elementor-form-custom-functions.php';
 
     $fields = $record->get_field(['id' => 'email']);
     if (empty($fields)) {
