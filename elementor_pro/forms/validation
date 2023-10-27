@@ -3,33 +3,41 @@
 // as the functions.php of the (child)theme.
 
 add_action('elementor_pro/forms/validation', function($record, $ajax_handler) {
+
+    // Ensure our custom functions are loaded.
     require_once get_stylesheet_directory() . '/elementor-form-custom-functions.php';
 
-    $fields = $record->get_field(['id' => 'email']);
-    if (empty($fields)) {
-        $ajax_handler->add_error('email', 'Email cannot be blank');
-        return;
+    // Extract submitted form fields.
+    $raw_fields = $record->get('fields');
+    $fields = [];
+    foreach ($raw_fields as $id => $field) {
+        $fields[$id] = $field['value'];
     }
 
-    $field = current($fields);
-
-    if (!validateEmail($field['value'])) {
-        $ajax_handler->add_error($field['id'], 'Invalid Email Address or Domain');
-
-        $failed_data = [
-            'Name' => $record->get_field(['id' => 'name'])[0]['value'],
-            'Email' => $field['value'],
+    // Validate email.
+    if (!isset($fields['email']) || empty(trim($fields['email']))) {
+        $ajax_handler->add_error('email', 'Email cannot be blank.');
+        return;
+    }
+    if (!validateEmail($fields['email'])) {
+        $table_name = 'failedEmails';
+        $additional_data = [
             'IP Address' => captureIPAddress(),
             'Date' => current_time('mysql'),
             'Referrer' => captureReferrer(),
             'User Agent' => captureBrowserDetails(),
-            'gclid' => readUTMParameters('gclid'),
-            'utm_source' => readUTMParameters('utm_source'),
-            'utm_medium' => readUTMParameters('utm_medium'),
-            'utm_campaign' => readUTMParameters('utm_campaign'),
-            'utm_content' => readUTMParameters('utm_content')
         ];
+        $utm_data = readUTMParameters();
+        $data_to_insert = array_merge($fields, $additional_data, $utm_data);
 
-        insertEventToDB('failedEmails', $failed_data);
+        // Insert the data into the database.
+        $insert_result = insertEventToDB($table_name, $data_to_insert);
+        if (!$insert_result) {
+            notifyAdmin("Failed to insert failed email data into database.");
+        }
+
+        $ajax_handler->add_error('email', 'Invalid email address.');
     }
+
 }, 10, 2);
+
