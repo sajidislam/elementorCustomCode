@@ -34,11 +34,9 @@ add_action('elementor_pro/forms/validation', function($record, $ajax_handler) {
     $utm_data = getAllUTMParameters();
     $data_to_insert = array_merge($fields, $additional_data, $utm_data);
 
-        // Insert the data into the database.
-    $insert_result = insertEventToDB($table_name, $data_to_insert);
-    if (!$insert_result) {
-           notifyAdmin("Failed to insert failed email data into database.");
-       }
+     // Insert the data into the database.
+    insertEventToDB($table_name, $data_to_insert);
+
 	if ($table_name == 'failedEmails') {
         $ajax_handler->add_error('email', 'Invalid email address.');		
 	}
