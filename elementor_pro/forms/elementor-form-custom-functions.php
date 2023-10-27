@@ -123,7 +123,9 @@ function insertEventToDB($table_name, $fields) {
     // Check and handle database errors
     if (!$success) {
         $error = $wpdb->last_error;
-        notifyAdmin("Failed to insert event into $table_name. Error: $error");
+        notifyAdmin("Failed to insert event into $table_name. Error: $error \n Data: " . json_encode($data_to_insert) );
+
+
 		return false;
     }
 	return true;
