@@ -1,5 +1,16 @@
 <?php
 
+function getAllUTMParameters() {
+    $utm_keys = ['gclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
+    $values = [];
+
+    foreach ($utm_keys as $param) {
+        $values[$param] = readUTMParameters($param);
+    }
+
+    return $values;
+}
+
 function readUTMParameters($param) {
     // Check if the UTM parameter is present in the URL
     if (isset($_GET[$param])) {
