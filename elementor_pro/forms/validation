@@ -27,7 +27,8 @@ add_action('elementor_pro/forms/validation', function($record, $ajax_handler) {
             'Referrer' => captureReferrer(),
             'User Agent' => captureBrowserDetails(),
         ];
-        $utm_data = readUTMParameters();
+        $utm_parameters = getAllUTMParameters();
+
         $data_to_insert = array_merge($fields, $additional_data, $utm_data);
 
         // Insert the data into the database.
