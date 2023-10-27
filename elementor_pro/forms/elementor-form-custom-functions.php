@@ -1,6 +1,6 @@
 <?php
 
-function readUTMParameter($param) {
+function readUTMParameters($param) {
     // Check if the UTM parameter is present in the URL
     if (isset($_GET[$param])) {
         $value = sanitize_text_field($_GET[$param]);
