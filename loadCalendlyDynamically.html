@@ -5,7 +5,14 @@ In this code, we are looking for 2 first party cookies: user_firstName and user_
 If the javascript code finds these 2 cookies then it loads the calendly iFrame
 and pre-populates the First name and email input.
 
-Calendly documentation: https://help.calendly.com/hc/en-us/articles/223147027?tab=advanced#6 
+Calendly has changed the documentation and now uses name, first_name and last_email. So updating Calendly documentation link below:
+--> Calendly documentation: https://help.calendly.com/hc/en-us/articles/226766767-Pre-populate-invitee-information-on-the-scheduling-page
+
+One thing to remember is that in our code, we are using the name instead of first_name. The benefit of this are:
+a.) If the user enters "first" and "last" names then it will automatically be placed in the right box
+b.) If the user enters only "first" then the first name box will be prefilled.
+
+So using name is better. Also updating the JS variable names (userName and userEmail) instead of "Fname" and "email" for better readability.
 
 TODO: 
 Make sure to update the Calendly url down below. For demo purposes, I'm using 
@@ -28,19 +35,19 @@ Begin Calendly iFrame
       if (parts.length === 2) return parts.pop().split(";").shift();
     }
 
-    // Read Fname and email from cookies
-    const Fname = getCookie("user_firstName");
-    const email = getCookie("user_email");
+    // Read userName and userEmail from cookies
+    const userName = getCookie("user_name");
+    const userEmail = getCookie("user_email");
 
     // Base Calendly URL
     let calendlyUrl = "https://calendly.com/marketandgrow/test?hide_gdpr_banner=1";
 
-    // Add Fname and email to Calendly URL if they are defined
-    if (Fname !== undefined) {
-      calendlyUrl += `&name=${Fname}`;
+    // Add userName and email to Calendly URL if they are defined
+    if (userName !== undefined) {
+      calendlyUrl += `&name=${userName}`;
     }
-    if (email !== undefined) {
-      calendlyUrl += `&email=${email}`;
+    if (userEmail !== undefined) {
+      calendlyUrl += `&email=${userEmail}`;
     }
 
     // Create Calendly div
