@@ -33,18 +33,21 @@ if ($err) {
     if (isset($data['collection']) && !empty($data['collection'])) {
         echo "<table border='1'>";
         echo "<tr><th>Event Name</th><th>Event Status</th><th>Event Start Date</th><th>Event Start Time</th></tr>";
+        $currentDate = new DateTime(); // Current date and time
         foreach ($data['collection'] as $event) {
-            $eventName = $event['name'];
-            $eventStatus = $event['status'];
             $eventStart = new DateTime($event['start_time']);
-            $eventStartDate = $eventStart->format('Y-m-d');
-            $eventStartTime = $eventStart->format('H:i');
-            echo "<tr>";
-            echo "<td>$eventName</td>";
-            echo "<td>$eventStatus</td>";
-            echo "<td>$eventStartDate</td>";
-            echo "<td>$eventStartTime</td>";
-            echo "</tr>";
+            if ($eventStart > $currentDate) { // Check if the event is in the future
+                $eventName = $event['name'];
+                $eventStatus = $event['status'];
+                $eventStartDate = $eventStart->format('Y-m-d');
+                $eventStartTime = $eventStart->format('H:i');
+                echo "<tr>";
+                echo "<td>$eventName</td>";
+                echo "<td>$eventStatus</td>";
+                echo "<td>$eventStartDate</td>";
+                echo "<td>$eventStartTime</td>";
+                echo "</tr>";
+            }
         }
         echo "</table>";
     } else {
