@@ -1,67 +1,55 @@
 <?php
+
 $emailToSearch = "target_email@example.com"; // Replace this with the email you're searching for
 
 // Access Token from your Calendly account
 $accessToken = 'YOUR_PERSONAL_ACCESS_TOKEN';
 
-// User UUID endpoint
-$userUrl = 'https://api.calendly.com/users/me';
+// User UUID (replace with the UUID you provided earlier)
+$userUUID = 'https://api.calendly.com/users/XXX_SECRET'; // replace 'XXX_SECRET' with the appropriate UUID
 
-// Initialize a new cURL session and set the options
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $userUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-    'Authorization: Bearer ' . $accessToken,
-    'Content-Type: application/json'
-));
+$eventsUrl = "https://api.calendly.com/scheduled_events?user=" . urlencode($userUUID) . "&invitee_email=" . urlencode($emailToSearch) . "&status=active";
 
-$response = curl_exec($ch);
-curl_close($ch);
+$curl = curl_init();
 
-$userData = json_decode($response, true);
-$userUUID = isset($userData['resource']['uri']) ? $userData['resource']['uri'] : null;
+curl_setopt_array($curl, [
+    CURLOPT_URL => $eventsUrl,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        "Authorization: Bearer " . $accessToken,
+        "Content-Type: application/json"
+    ]
+]);
 
-if (!$userUUID) {
-    echo "Error: UUID not found in the response";
-    exit;
-}
+$response = curl_exec($curl);
+$err = curl_error($curl);
 
-// Scheduled Events endpoint with user UUID
-$eventsUrl = "https://api.calendly.com/scheduled_events?user=$userUUID";
+curl_close($curl);
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $eventsUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-    'Authorization: Bearer ' . $accessToken,
-    'Content-Type: application/json'
-));
-
-$response = curl_exec($ch);
-$scheduledEvents = json_decode($response, true);
-curl_close($ch);
-
-// Search for the email in scheduled events
-$eventFound = false;
-if (isset($scheduledEvents['collection']) && is_array($scheduledEvents['collection'])) {
-    foreach ($scheduledEvents['collection'] as $event) {
-        if (isset($event['invitees']) && is_array($event['invitees'])) {
-            foreach ($event['invitees'] as $invitee) {
-                if (isset($invitee['email']) && $invitee['email'] === $emailToSearch) {
-                    $eventFound = true;
-                    echo "Found event for email: " . $emailToSearch . "<br>";
-                    echo "Event start time: " . $event['start_time'] . "<br>";
-                    echo "Event end time: " . $event['end_time'] . "<br>";
-                    break 2; // Break out of both loops once a match is found
-                }
-            }
+if ($err) {
+    echo "cURL Error #:" . $err;
+} else {
+    $data = json_decode($response, true);
+    if (isset($data['collection']) && !empty($data['collection'])) {
+        echo "<table border='1'>";
+        echo "<tr><th>Event Name</th><th>Event Status</th><th>Event Start Date</th><th>Event Start Time</th></tr>";
+        foreach ($data['collection'] as $event) {
+            $eventName = $event['name'];
+            $eventStatus = $event['status'];
+            $eventStart = new DateTime($event['start_time']);
+            $eventStartDate = $eventStart->format('Y-m-d');
+            $eventStartTime = $eventStart->format('H:i');
+            echo "<tr>";
+            echo "<td>$eventName</td>";
+            echo "<td>$eventStatus</td>";
+            echo "<td>$eventStartDate</td>";
+            echo "<td>$eventStartTime</td>";
+            echo "</tr>";
         }
+        echo "</table>";
+    } else {
+        echo "No active scheduled events found for the given email.";
     }
-}
-
-if (!$eventFound) {
-    echo "No scheduled events found for email: " . $emailToSearch;
 }
 
 ?>
