@@ -26,6 +26,10 @@ if(curl_errno($ch)) {
 
 curl_close($ch);
 
+echo "<pre>";
+print_r($response);
+echo "</pre>";
+
 // Decode the response
 $data = json_decode($response, true);
 
