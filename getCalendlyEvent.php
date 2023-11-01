@@ -1,43 +1,55 @@
 <?php
-// Your API token
+
+// API Token
 $apiToken = 'YOUR_API_TOKEN';
 
-// Email of the invitee you're looking for
-$inviteeEmail = 'example@example.com';
+// Invitee email you're searching for
+$inviteeEmail = 'example@email.com';
 
-// Initialize cURL session
+// cURL request to fetch scheduled events from Calendly API
 $ch = curl_init();
 
-// Set cURL options
 curl_setopt($ch, CURLOPT_URL, 'https://api.calendly.com/scheduled_events');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
-$headers = array();
-$headers[] = 'Authorization: Bearer ' . $apiToken;
-$headers[] = 'Content-Type: application/json';
-curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'Authorization: Bearer ' . $apiToken,
+    'Content-Type: application/json'
+));
 
-// Execute cURL session and get the response
 $response = curl_exec($ch);
 
-// Check for cURL errors
-if (curl_errno($ch)) {
+if(curl_errno($ch)) {
     echo 'Error:' . curl_error($ch);
+    exit;
 }
 
-// Close the cURL session
 curl_close($ch);
 
-// Decode the JSON response
+// Decode the response
 $data = json_decode($response, true);
 
-// Loop through the scheduled events to find the invitee's email
-foreach ($data['data'] as $event) {
-    foreach ($event['invitees'] as $invitee) {
-        if ($invitee['email'] == $inviteeEmail) {
-            // Here you can access the event details for the matched invitee
-            echo "Event date & time for " . $inviteeEmail . ": " . $event['start_time'];
+$found = false;
+
+if (isset($data['data'])) {
+    foreach ($data['data'] as $event) {
+        if (isset($event['invitees']) && is_array($event['invitees'])) {
+            foreach ($event['invitees'] as $invitee) {
+                if (isset($invitee['email']) && $invitee['email'] === $inviteeEmail) {
+                    echo "Event date & time for " . $inviteeEmail . ": " . $event['start_time'] . "<br>";
+                    $found = true;
+                    break;
+                }
+            }
+        }
+        if ($found) {
+            break;
         }
     }
 }
+
+if (!$found) {
+    echo "No matching events found for " . $inviteeEmail . ".";
+}
+
 ?>
