@@ -1,0 +1,67 @@
+<!--
+1Nov23 -  The purpose of this code is to dynamically load calendly calendar instead of the standard method.
+
+In this code, we are looking for 2 first party cookies: user_firstName and user_email.
+If the javascript code finds these 2 cookies then it loads the calendly iFrame
+and pre-populates the First name and email input.
+
+Calendly documentation: https://help.calendly.com/hc/en-us/articles/223147027?tab=advanced#6 
+
+TODO: 
+Make sure to update the Calendly url down below. For demo purposes, I'm using 
+    https://calendly.com/marketandgrow/test?hide_gdpr_banner=1
+
+-->
+
+<h4>
+Begin Calendly iFrame
+</h4>
+ <div id="calendly-container">
+    <!-- Calendly widget will be inserted here -->
+  </div>
+
+  <script>
+    // Function to get cookie by name
+    function getCookie(name) {
+      const value = "; " + document.cookie;
+      const parts = value.split("; " + name + "=");
+      if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+
+    // Read Fname and email from cookies
+    const Fname = getCookie("user_firstName");
+    const email = getCookie("user_email");
+
+    // Base Calendly URL
+    let calendlyUrl = "https://calendly.com/marketandgrow/test?hide_gdpr_banner=1";
+
+    // Add Fname and email to Calendly URL if they are defined
+    if (Fname !== undefined) {
+      calendlyUrl += `&name=${Fname}`;
+    }
+    if (email !== undefined) {
+      calendlyUrl += `&email=${email}`;
+    }
+
+    // Create Calendly div
+    const calendlyDiv = document.createElement("div");
+    calendlyDiv.className = "calendly-inline-widget";
+    calendlyDiv.style = "min-width:320px;height:700px;";
+    calendlyDiv.setAttribute("data-url", calendlyUrl);
+
+    // Create Calendly script
+    const calendlyScript = document.createElement("script");
+    calendlyScript.type = "text/javascript";
+    calendlyScript.src = "https://assets.calendly.com/assets/external/widget.js";
+    calendlyScript.async = true;
+
+    // Get the container where you want to insert the Calendly widget
+    const container = document.getElementById("calendly-container");
+
+    // Append Calendly div and script to the container
+    container.appendChild(calendlyDiv);
+    container.appendChild(calendlyScript);
+  </script>
+<h4>
+  Finished Calendly iFrame
+</h4>
