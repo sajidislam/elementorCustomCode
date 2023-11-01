@@ -41,13 +41,17 @@ if ($err) {
         echo "<table border='1'>";
         echo "<tr><th>Event Name</th><th>Event Status</th><th>Event Start Date</th><th>Event Start Time</th></tr>";
         $currentDate = new DateTime(); // Current date and time
+        $currentDate->setTimezone(new DateTimeZone('America/New_York')); // Set current date timezone to Eastern Time
+
         foreach ($data['collection'] as $event) {
-            $eventStart = new DateTime($event['start_time']);
+            $eventStart = new DateTime($event['start_time'], new DateTimeZone('UTC'));
+            $eventStart->setTimezone(new DateTimeZone('America/New_York')); // Convert the event start time to US Eastern Time
+
             if ($eventStart > $currentDate) { // Check if the event is in the future
                 $eventName = $event['name'];
                 $eventStatus = $event['status'];
                 $eventStartDate = $eventStart->format('Y-m-d');
-                $eventStartTime = $eventStart->format('H:i');
+                $eventStartTime = $eventStart->format('g:i A');
                 echo "<tr>";
                 echo "<td>$eventName</td>";
                 echo "<td>$eventStatus</td>";
