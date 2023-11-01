@@ -1,6 +1,13 @@
 <?php
+// Check if the cookie 'user_email' is set and not empty
+if (isset($_COOKIE['user_email']) && !empty($_COOKIE['user_email'])) {
+    $emailToSearch = $_COOKIE['user_email']; // Retrieve the value of 'user_email' cookie
+} else {
+    echo "User email cookie not found!";
+    exit; // Exit the script if the cookie is not found
+}
 
-$emailToSearch = "target_email@example.com"; // Replace this with the email you're searching for
+//$emailToSearch = "target_email@example.com"; // Replace this with the email you're searching for
 
 // Access Token from your Calendly account
 $accessToken = 'YOUR_PERSONAL_ACCESS_TOKEN';
