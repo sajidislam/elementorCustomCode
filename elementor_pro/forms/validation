@@ -22,7 +22,7 @@ add_action('elementor_pro/forms/validation', function($record, $ajax_handler) {
         // Check if name is empty after sanitization or contains only valid characters.
         if (empty($name)) {
             $ajax_handler->add_error('name', 'Name cannot be blank.');
-        } elseif (!preg_match('/^[a-zA-Z\s\'-]+$/', $name)) { // Allow letters, apostrophes, hyphens, and spaces.
+        } elseif (!preg_match('/^[a-zA-Z\s\'\-.]+$/', $name)) { // Allow . letters, apostrophes, hyphens, and spaces.
             $ajax_handler->add_error('name', 'Name contains invalid characters.');
         }
     }
