@@ -1,0 +1,32 @@
+/*
+11Nov23 - This HTML code can be placed in a Thank You or similar page after
+the visitor has completed a booking event through calendly calendar that 
+was embedded in a previous HTML page.
+
+TO DO:
+1. Make sure the folder "custom-scripts" exists under public_html (i.e at the same level as wp-config.php file)
+2. Make sure that the file script.php exists inside of custom-scripts folder
+3. Make sure that the permissions are correct so that it can be read
+4. Update script.php and enter your Calendly access token and UUID
+5. If you need help to figure these 2 out then there is a YouTube video to do that
+6. Keep access token and UUID secure
+
+Future TO DO:
+a. Add additional security to script to php so that it can only be executed from WordPress
+b. May be turn this feature into a plugin
+/*
+
+<!-- Placeholder for your data -->
+<div id="calendlyData"></div>
+
+<!-- JavaScript to fetch data -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Current URL is: " + window.location.href);
+    fetch('/custom-scripts/script.php')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('calendlyData').textContent = data.message;
+    });
+});
+</script>
