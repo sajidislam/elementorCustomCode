@@ -14,6 +14,10 @@ TO DO:
 Future TO DO:
 a. Add additional security to script to php so that it can only be executed from WordPress
 b. May be turn this feature into a plugin
+
+12Nov23 - Added cacheBuster to overcome the caching issue(s) in browser during testing+development. 
+          In the future it can be turned off though I do not see any harm of keeping it on.
+          Also added the catch block
 /*
 
 <!-- Placeholder for your data -->
@@ -22,11 +26,17 @@ b. May be turn this feature into a plugin
 <!-- JavaScript to fetch data -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Current URL is: " + window.location.href);
-    fetch('/custom-scripts/script.php')
+    //console.log("Current URL is: " + window.location.href);
+     // Generate a unique query string
+    var cacheBuster = 't=' + new Date().getTime();
+    
+    fetch('/custom-scripts/script.php?' + cacheBuster)
     .then(response => response.json())
     .then(data => {
         document.getElementById('calendlyData').textContent = data.message;
+    }).catch(error => {
+        console.error('Fetch error:', error);
     });
 });
 </script>
+
