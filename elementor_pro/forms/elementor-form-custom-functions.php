@@ -1,11 +1,95 @@
 <?php
+function validateForm($record,$ajax_handler){
+	
+	// Ensure our custom functions are loaded.
+   // require_once get_stylesheet_directory() . '/elementor-form-custom-functions.php';
 
+
+
+    // Extract submitted form fields.
+    $raw_fields = $record->get('fields');
+    $fields = [];
+    foreach ($raw_fields as $id => $field) {
+        $fields[$id] = $field['value'];
+    }
+
+   // Name is a required field so it will be entered. Still, sanitize and validate name.
+   // The regex preg_match('/^[a-zA-Z\s\'-]+$/', $name) is checking for a very conservative set of characters: letters, spaces,
+   // apostrophes, and hyphens, which are common in names.
+    if (isset($fields['name'])) {
+        // Strip tags to prevent XSS, trim to remove whitespace, and sanitize text field.
+        $name = sanitize_text_field(trim(strip_tags($fields['name'])));
+
+        // Check if name is empty after sanitization or contains only valid characters.
+        if (empty($name)) {
+            $ajax_handler->add_error('name', 'Name cannot be blank.');
+        } elseif (!preg_match('/^[a-zA-Z\s\'\-.]+$/', $name)) { // Allow letters, apostrophes, hyphens, and spaces.
+            $ajax_handler->add_error('name', 'Name contains invalid characters.');
+        }
+    }
+
+	
+    // Validate email.
+    if (!isset($fields['email']) || empty(trim($fields['email']))) {
+        $ajax_handler->add_error('email', 'Email cannot be blank.');
+        return;
+    }
+	//Even though we perform a deeper validation in elementor-form-custom-functions.php
+	//nevertheless, i'm using the PHP built-in filter_var function along with FILTER_VALIDATE_EMAIL constant to filter the 
+	//email address to determine if it's a valid email address format.
+	//P.s: filter_var can also be used URLs, IP addresses, and to sanitize strings, among other things.
+
+	if (!filter_var($fields['email'], FILTER_VALIDATE_EMAIL)) {
+        $ajax_handler->add_error('email', 'Invalid email address.');
+		return;
+    }
+	
+    if (!validateEmail($fields['email'])) {
+        $table_name = 'failedEmails';
+	  }
+	else {
+		$table_name = 'successEmails';
+	}
+    $additional_data = [
+       'IP_Address' => captureIPAddress(),
+       'Date' => current_time('mysql'),
+       'Referrer' => captureReferrer(),
+       'User_Agent' => captureBrowserDetails(),
+     ];
+    $utm_data = getAllUTMParameters();
+
+    $data_to_insert = array_merge($fields, $additional_data, $utm_data);
+
+        // Insert the data into the database.
+   insertEventToDB($table_name, $data_to_insert);
+
+	/*
+	 // 31Oct23 - Line 76 - 84 is obsolete since we handle all the errors in the insertEventToDB function.
+    $insert_result = insertEventToDB($table_name, $data_to_insert);
+ 
+	
+    if (!$insert_result) {
+//           notifyAdmin("Failed to insert failed email data into database.");
+//          notifyAdmin("Failed to insert data into " . $table_name . ". Data: " . json_encode($data_to_insert));
+	  error_log('notify Admin: ' ."Failed to insert data into " . $table_name . ". Data: " . json_encode($data_to_insert) );
+
+       }
+*/	
+	if ($table_name == 'failedEmails') {
+        $ajax_handler->add_error('email', 'Invalid email address.');		
+	}
+	else {
+	    setcookie('scLeadName', $fields['name'], time() + (86400 * 90), "/");
+		setcookie('scLeadEmail', $fields['email'], time() + (86400 * 90), "/");
+	}
+}
 function getAllUTMParameters() {
     $utm_keys = ['gclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
     $values = [];
 
     foreach ($utm_keys as $param) {
         $values[$param] = readUTMParameters($param);
+		//error_log("$param: $values[$param]");
     }
 
     return $values;
@@ -13,13 +97,14 @@ function getAllUTMParameters() {
 
 function readUTMParameters($param) {
     // Check if the UTM parameter is present in the URL
-    if (isset($_GET[$param])) {
+	if (isset($_GET[$param])) {
         $value = sanitize_text_field($_GET[$param]);
-
+//         error_log("Value readUTMParameters - $value");
         // Set the cookie if the value is found in the URL
         setUTMParameters($param, $value, 90);
     } else {
-        // If not present in URL, check for the cookie
+	    // If not present in URL, check for the cookie
+	    // This will mean that it is a returning user
         $value = isset($_COOKIE[$param]) ? sanitize_text_field($_COOKIE[$param]) : '';
     }
     return $value;
@@ -49,8 +134,10 @@ function captureIPAddress() {
     $ip_keys = array('HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR');
     foreach ($ip_keys as $key) {
         if (array_key_exists($key, $_SERVER)) {
+			//error_log("$key : " . $_SERVER[$key]);
             return sanitize_text_field($_SERVER[$key]);
         }
+	//error_log("$key :" );
     }
     return '';
 }
@@ -121,12 +208,12 @@ function insertEventToDB($table_name, $fields) {
     $success = $wpdb->replace($table_name, $fields);
 
     // Check and handle database errors
+    // email wp admin and inform of the error
     if (!$success) {
         $error = $wpdb->last_error;
-        notifyAdmin("Failed to insert event into $table_name. Error: $error \n Data: " . json_encode($data_to_insert) );
-
-
-		return false;
+	notifyAdmin("Failed to insert event into $table_name. Error: $error \n Data: " . json_encode($data_to_insert) );
+	error_log('notify Admin: ' ."Failed to insert data into " . $table_name . ". Data: " . json_encode($data_to_insert));
+	return false;
     }
 	return true;
 }
