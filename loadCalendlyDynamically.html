@@ -17,15 +17,14 @@ So using name is better. Also updating the JS variable names (userName and userE
 TODO: 
 Make sure to update the Calendly url down below. For demo purposes, I'm using 
     https://calendly.com/marketandgrow/test?hide_gdpr_banner=1
-
+20Nov23 - Changed the cookie from user_name & user_email to scLeadName & scLeadEmail. Otherwise code is the same
 -->
 
-<h4>
-Begin Calendly iFrame
-</h4>
+<!-- Calendly inline widget end -->
  <div id="calendly-container">
     <!-- Calendly widget will be inserted here -->
   </div>
+
 
   <script>
     // Function to get cookie by name
@@ -35,19 +34,19 @@ Begin Calendly iFrame
       if (parts.length === 2) return parts.pop().split(";").shift();
     }
 
-    // Read userName and userEmail from cookies
-    const userName = getCookie("user_name");
-    const userEmail = getCookie("user_email");
+    // Read scLeadName and scLeadEmail from cookies
+    const scLeadName = getCookie("scLeadName");
+    const scLeadEmail = getCookie("scLeadEmail");
 
     // Base Calendly URL
     let calendlyUrl = "https://calendly.com/marketandgrow/test?hide_gdpr_banner=1";
 
-    // Add userName and email to Calendly URL if they are defined
-    if (userName !== undefined) {
-      calendlyUrl += `&name=${userName}`;
+    // Add scLeadName and email to Calendly URL if they are defined
+    if (scLeadName !== undefined) {
+      calendlyUrl += `&name=${encodeURIComponent(scLeadName)}`;
     }
-    if (userEmail !== undefined) {
-      calendlyUrl += `&email=${userEmail}`;
+    if (scLeadEmail !== undefined) {
+      calendlyUrl += `&email=${scLeadEmail}`;
     }
 
     // Create Calendly div
@@ -69,6 +68,3 @@ Begin Calendly iFrame
     container.appendChild(calendlyDiv);
     container.appendChild(calendlyScript);
   </script>
-<h4>
-  Finished Calendly iFrame
-</h4>
