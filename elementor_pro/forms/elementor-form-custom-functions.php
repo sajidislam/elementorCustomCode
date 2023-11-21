@@ -4,7 +4,7 @@ function validateForm($record,$ajax_handler){
 	// Ensure our custom functions are loaded.
    // require_once get_stylesheet_directory() . '/elementor-form-custom-functions.php';
 
-
+   //error_log('Entered validateForm');
 
     // Extract submitted form fields.
     $raw_fields = $record->get('fields');
@@ -14,9 +14,11 @@ function validateForm($record,$ajax_handler){
     }
 
    // Name is a required field so it will be entered. Still, sanitize and validate name.
-   // The regex preg_match('/^[a-zA-Z\s\'-]+$/', $name) is checking for a very conservative set of characters: letters, spaces,
-   // apostrophes, and hyphens, which are common in names.
-    if (isset($fields['name'])) {
+   // The regex preg_match('/^[a-zA-Z\s\'-]+$/', $name) is checking for a very conservative 
+   // set of characters: 
+   // letters, spaces, apostrophes, and hyphens, which are common in names.
+    
+	if (isset($fields['name'])) {
         // Strip tags to prevent XSS, trim to remove whitespace, and sanitize text field.
         $name = sanitize_text_field(trim(strip_tags($fields['name'])));
 
@@ -34,8 +36,10 @@ function validateForm($record,$ajax_handler){
         $ajax_handler->add_error('email', 'Email cannot be blank.');
         return;
     }
-	//Even though we perform a deeper validation in elementor-form-custom-functions.php
-	//nevertheless, i'm using the PHP built-in filter_var function along with FILTER_VALIDATE_EMAIL constant to filter the 
+	
+	//Even though we perform a deeper validation in another function,
+	//nevertheless, i'm using the PHP built-in filter_var function along with 
+	//FILTER_VALIDATE_EMAIL constant to filter the 
 	//email address to determine if it's a valid email address format.
 	//P.s: filter_var can also be used URLs, IP addresses, and to sanitize strings, among other things.
 
@@ -59,22 +63,11 @@ function validateForm($record,$ajax_handler){
     $utm_data = getAllUTMParameters();
 
     $data_to_insert = array_merge($fields, $additional_data, $utm_data);
-
-        // Insert the data into the database.
-   insertEventToDB($table_name, $data_to_insert);
-
-	/*
-	 // 31Oct23 - Line 76 - 84 is obsolete since we handle all the errors in the insertEventToDB function.
-    $insert_result = insertEventToDB($table_name, $data_to_insert);
- 
+	//error_log("Table Name - $table_name : " . print_r($data_to_insert, true));
 	
-    if (!$insert_result) {
-//           notifyAdmin("Failed to insert failed email data into database.");
-//          notifyAdmin("Failed to insert data into " . $table_name . ". Data: " . json_encode($data_to_insert));
-	  error_log('notify Admin: ' ."Failed to insert data into " . $table_name . ". Data: " . json_encode($data_to_insert) );
+    // Insert the data into the database.
+  	insertEventToDB($table_name, $data_to_insert);
 
-       }
-*/	
 	if ($table_name == 'failedEmails') {
         $ajax_handler->add_error('email', 'Invalid email address.');		
 	}
@@ -84,9 +77,10 @@ function validateForm($record,$ajax_handler){
 	}
 }
 function getAllUTMParameters() {
-    $utm_keys = ['gclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
+    $utm_keys = ['wbraid','gbraid','gclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
     $values = [];
 
+	//$param_lower = strtolower($param);
     foreach ($utm_keys as $param) {
         $values[$param] = readUTMParameters($param);
 		//error_log("$param: $values[$param]");
@@ -96,10 +90,15 @@ function getAllUTMParameters() {
 }
 
 function readUTMParameters($param) {
+	//error_log("Entered readUTMParam with: $param");
+	//PHP's $_GET array is case-sensitive. 
+	//This means that $_GET['gclid'] and $_GET['GCLID'] are considered different variables
+	//
     // Check if the UTM parameter is present in the URL
+    // 
 	if (isset($_GET[$param])) {
         $value = sanitize_text_field($_GET[$param]);
-//         error_log("Value readUTMParameters - $value");
+         //error_log("Value readUTMParameters - $value");
         // Set the cookie if the value is found in the URL
         setUTMParameters($param, $value, 90);
     } else {
@@ -192,6 +191,8 @@ function insertEventToDB($table_name, $fields) {
             Date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
             Referrer text,
             User_Agent text,
+	    wbraid text,
+	    gbraid text,
             gclid text,
             utm_source text,
             utm_medium text,
